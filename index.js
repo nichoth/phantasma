@@ -189,13 +189,34 @@ Phantasma.prototype.viewport = function (width, height) {
   });
 };
 
-Phantasma.prototype.wait = function () {
+Phantasma.prototype.wait = function (selector) {
+
+  if (typeof selector === 'string') { return this.waitForEl(selector); }
+
   var self = this;
 
   return new this.promise(function (resolve, reject) {
     self.once('onLoadFinished', function (status) {
       resolve(status);
     });
+  }).timeout(this.options.timeout);
+};
+
+Phantasma.prototype.waitForEl = function(selector) {
+  var self = this;
+
+  return new this.promise(function(resolve, reject) {
+    var i = setInterval(function () {
+      self.evaluate(function () {
+        var element = document.querySelector(selector);
+        return !!element;
+      }).then(function (present) {
+        if (present){
+          clearInterval(i);
+          resolve();
+        }
+      });
+    }, 100);
   }).timeout(this.options.timeout);
 };
 
